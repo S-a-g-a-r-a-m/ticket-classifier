@@ -4,3 +4,5 @@ data/
 
 models/*
 !models/ticket_classifier.joblib
+!models/production_metadata.json
+!models/production_metadata_v1.json

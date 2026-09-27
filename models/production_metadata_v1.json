@@ -1,0 +1,13 @@
+{
+    "model_version": "v1",
+    "data_version": "v1",
+    "algorithm": "LinearSVC",
+    "macro_f1": 0.7153,
+    "tfidf_ngram_range": [
+        1,
+        2
+    ],
+    "tfidf_min_df": 2,
+    "test_size": 0.2,
+    "random_state": 42
+}
