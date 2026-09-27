@@ -38,3 +38,17 @@ jobs:
       - name: Evaluate promotion
         run: |
           python training/promote.py
+
+      - name: Commit promoted model
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+users.noreply.github.com"
+
+          git add models/ticket_classifier.joblib models/production_metadata.json
+
+          if git diff --cached --quiet; then
+            echo "No model changes to commit."
+          else
+            git commit -m "Update production model"
+            git push
+          fi
