@@ -1,8 +1,6 @@
 from fastapi.testclient import TestClient
-from app.main import app
-
-client = TestClient(app)
-
+from app.main import app, model
+client = TestClient(app, raise_server_exceptions=False)
 
 def test_home():
     response = client.get("/")
@@ -20,7 +18,12 @@ def test_valid_prediction():
     )
 
     assert response.status_code == 200
-    assert isinstance(response.json()["queue"], str)
+
+    data = response.json()
+
+    assert isinstance(data["queue"], str)
+    assert isinstance(data["latency_ms"], float)
+    assert data["latency_ms"] >= 0
 
 
 def test_empty_ticket():
@@ -39,3 +42,20 @@ def test_missing_text():
     )
 
     assert response.status_code == 422
+
+def test_prediction_error(monkeypatch):
+    def failing_predict(text):
+        raise RuntimeError("Test model failure")
+
+    monkeypatch.setattr(
+        model,
+        "predict",
+        failing_predict,
+    )
+
+    response = client.post(
+        "/predict",
+        json={"text": "This should trigger an error"}
+    )
+
+    assert response.status_code == 500
