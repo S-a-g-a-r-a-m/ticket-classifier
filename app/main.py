@@ -1,18 +1,23 @@
 import json
 import logging
+import os
+import secrets
 import time
 
 import joblib
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.responses import Response
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
 from prometheus_client import Counter, Histogram, generate_latest
-from fastapi.responses import Response
 
 logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+security = HTTPBasic()
 
 model = joblib.load("models/ticket_classifier.joblib")
 
@@ -41,14 +46,43 @@ class TicketRequest(BaseModel):
 def home():
     return {"message": "Ticket classifier API is running"}
 
+def verify_metrics_credentials(
+    credentials: HTTPBasicCredentials = Depends(security),
+):
+    expected_username = os.getenv("METRICS_USERNAME")
+    expected_password = os.getenv("METRICS_PASSWORD")
+
+    if not expected_username or not expected_password:
+        raise HTTPException(
+            status_code=500,
+            detail="Metrics authentication is not configured",
+        )
+
+    username_correct = secrets.compare_digest(
+        credentials.username,
+        expected_username,
+    )
+
+    password_correct = secrets.compare_digest(
+        credentials.password,
+        expected_password,
+    )
+
+    if not (username_correct and password_correct):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid metrics credentials",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
 @app.get("/metrics")
-def metrics():
+def metrics(
+    _: None = Depends(verify_metrics_credentials),
+):
     return Response(
         generate_latest(),
         media_type="text/plain",
     )
-
-
 
 @app.post("/predict")
 def predict(request: TicketRequest):

@@ -59,3 +59,20 @@ def test_prediction_error(monkeypatch):
     )
 
     assert response.status_code == 500
+
+def test_metrics_requires_authentication():
+    response = client.get("/metrics")
+
+    assert response.status_code == 401
+
+def test_metrics_with_authentication(monkeypatch):
+    monkeypatch.setenv("METRICS_USERNAME", "testuser")
+    monkeypatch.setenv("METRICS_PASSWORD", "testpassword")
+
+    response = client.get(
+        "/metrics",
+        auth=("testuser", "testpassword"),
+    )
+
+    assert response.status_code == 200
+    assert "ticket_predictions_total" in response.text
