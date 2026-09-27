@@ -1,3 +1,5 @@
+
+
 name: Train Model
 
 on:
@@ -28,3 +30,9 @@ jobs:
       - name: Evaluate promotion
         run: |
           python training/promote.py
+
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+            pip install -r requirements-dev.txt
