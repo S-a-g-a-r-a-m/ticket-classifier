@@ -1,4 +1,6 @@
 .venv/
 data/
-models/
 .ipynb_checkpoints/
+
+models/*
+!models/ticket_classifier.joblib
